@@ -185,6 +185,43 @@ void genericLambdas()
     std::cout << "sum 2: " << sumGeneric(4, 5, 6, 7) << std::endl;
 
     // C++17 has an update to variadic generic lambdas
+    // I didn't need the 2 templates for sum() like above.
+    const auto sumGeneric17 = [](auto... args) {
+        std::cout << "sumgeneric17 of: " << sizeof...(args) << " numbers" << std::endl;
+        return(args + ... + 0);
+    };
+    std::cout << "sumGeneric17(1.1, 2.2, 3.3)" << sumGeneric17(1.1, 2.2, 3.3) << std::endl;
+
+    const auto printer = [](auto... args) {
+        (std::cout << ... << args) << std::endl;
+    };
+    printer(1,2,3,"hello", 10.5f);
+
+    // add spaces, nested lambda
+    const auto printer2 = [](auto... args) {
+        const auto printElem = [](auto elem) {
+            std::cout << elem << ", ";
+        };
+        (printElem(args), ...);
+        std::cout << std::endl;
+    };
+    printer2(1,2,3,"hello", 10.5f);
+
+    // and then shorten it
+    const auto printer3 = [](auto... args) {
+        ((std::cout<< args << ", "), ...);
+        std::cout << std::endl;
+    };
+    printer3(1,2,3,"hello", 10.5f);
+
+    // ... and then drop last comma
+    const auto printer4 = [](auto first, auto... args) {
+        std::cout << first;
+        ((std::cout << ", " << args), ...);
+        std::cout << std::endl;
+    };
+    printer4(1,2,3,"hello", 10.5f);
+
     // C++20 template lambdas
 
     // perfect forwarding...
@@ -230,6 +267,20 @@ void binding()
     };
 
     std::cout << "lamOnePlusC(10): " << lamOnePlusC(10) << std::endl;
+
+    // nested example, c++11
+    const std::vector<int> v {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    const auto val = std::count_if(v.begin(), v.end(),
+        std::bind(std::logical_and<bool>(), std::bind(std::greater<int>(), _1, 2),
+        std::bind(std::less<int>(), _1, 6)));
+    std::cout << "count_if v: " << val << std::endl;
+
+    // lambda version... and I broke it into 2 lambdas...
+    const auto more2less6compare = [](int x){ return x > 2 && x < 6;};
+    const auto more2less6 = std::count_if(v.begin(), v.end(),
+        //[](int x) {return x > 2 && x < 6;});
+        more2less6compare);
+    std::cout << "count_if v lambda: << " << more2less6 << std::endl;
 }
 
 int main()
