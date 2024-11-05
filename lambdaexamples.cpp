@@ -153,6 +153,85 @@ void captureInitializer()
     std::cout << "captInt f1: " << f1 << "  f2: " << f2 << std::endl;
 }
 
+template<typename T>
+auto sum(T x) {return x;}
+
+template<typename T1, typename... T>
+auto sum(T1 s, T... ts) { return s+ sum(ts...);}
+
+// for forwarding
+void foofwd(const std::string& s) {std::cout << "foofwd(const string&)" << std::endl;}
+void foofwd(std::string&& s) {std::cout << "foofwd(std::string&&)" << std::endl; }
+
+void genericLambdas()
+{
+    // C++ 14
+    // This is kinda like a template. x takes the type of whatever is passed in.
+    const auto foo = [](auto x, int y) {
+        std::cout << "foo x: " << x << "  y: " << y << std::endl;
+    };
+
+    foo(10, 1);
+    foo(100.123, 2);
+    foo("hello world string", 3);
+
+    // A variadic example
+    const auto sumGeneric = [](auto... args) {
+        std::cout << "sum of: " << sizeof...(args) << " numbers" << std::endl;
+        return sum(args...);
+    };
+
+    std::cout << "sum 1: " << sumGeneric(1.1, 2.2, 3.3) << std::endl;
+    std::cout << "sum 2: " << sumGeneric(4, 5, 6, 7) << std::endl;
+
+    // C++17 has an update to variadic generic lambdas
+    // C++20 template lambdas
+
+    // perfect forwarding...
+    const auto callFoo = [](auto&& s) {
+        std::cout << "Calling foofwd() on: " << s << std::endl;
+        foofwd(std::forward<decltype(s)>(s));
+    };
+    const std::string s{"Hello World"};
+    callFoo(s);
+    callFoo("Hello World Ref Ref");
+}
+
+// The ugliness from bind1st(), bind2nd(), mem_fun(), mem_fun_ref(), etc... were hell in c++98/03.
+void binding()
+{
+    // C++11. Better than above functions that were flat out hard at times
+    using std::placeholders::_1;
+    const auto onePlus = std::bind(std::plus<int>(), _1, 1);
+    const auto minusOne = std::bind(std::minus<int>(), _1, 1);
+
+    std::cout << "onePlus(10): " << onePlus(10) << ", minusOne(10): " << minusOne(10) << std::endl;
+
+    // ... and now a lambda version
+    auto lamOnePlus = [](int b) {
+        return 1 + b;
+    };
+    auto lamMinusOne = [](int b) {
+        return b - 1;
+    };
+    std::cout << "lamOnePlus(10): " << lamOnePlus(10) << ", lamMinusOne(10): " << lamMinusOne(10) << std::endl;
+
+    // use a capture initializer
+    auto lamOnePlusA = [a=1](int b) {
+        return a + b;
+    };
+
+    std::cout << "lamOnePlusA(10): " << lamOnePlusA(10) << std::endl;
+
+    // use a capture initializer
+    int c{2};
+    auto lamOnePlusC = [c](int b) {
+        return c + b;
+    };
+
+    std::cout << "lamOnePlusC(10): " << lamOnePlusC(10) << std::endl;
+}
+
 int main()
 {
     simpleExample();
@@ -160,6 +239,8 @@ int main()
     memVarExample();
     returnTypes();
     captureInitializer();
+    genericLambdas();
+    binding();
 
     return 0;
 }
